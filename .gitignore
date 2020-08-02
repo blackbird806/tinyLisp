@@ -1,3 +1,16 @@
+
+main.cpp
+
+# visual studio files
+*.sln
+*.vcxproj
+*.vcxproj.*
+/v16
+.vs/
+tinyLisp.tlog/
+Debug/
+Release/
+
 # Prerequisites
 *.d
 
