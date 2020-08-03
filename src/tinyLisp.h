@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <memory>
+#include <optional>
 
 enum class CellType
 {
@@ -20,6 +21,12 @@ enum class CellType
 
 bool isPrimitivetype(CellType t);
 
+struct Cell;
+struct Environement
+{
+	std::unordered_map<std::string, Cell> symbols;
+};
+
 struct Cell
 {
 	Cell(CellType = CellType::null);
@@ -33,8 +40,11 @@ struct Cell
 	std::string value;
 	double num_value;
 	bool bool_value;
+
 	std::function<Cell(std::vector<Cell> const&)> proc;
 	std::vector<Cell> list;
+
+	Environement local_env;
 };
 
 class Interpreter
@@ -42,7 +52,7 @@ class Interpreter
 
 public:
 	Interpreter();
-	Cell eval(Cell const& cell);
+	Cell eval(Cell const& cell, Environement& env);
 	Cell evalS(std::string const&);
 
 private:
@@ -50,8 +60,7 @@ private:
 	void set_globals();
 
 	static std::queue<std::string> lex(std::string_view source);
-	static Cell read(std::string const& str);
 	static Cell read_from(std::queue<std::string>& tokens);
 
-	std::unordered_map<std::string, Cell> symbols;
+	Environement global_env;
 };

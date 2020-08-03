@@ -19,7 +19,6 @@ Cell::Cell(CellType t, std::string str) : type(t), value(str)
 
 }
 
-
 Cell::Cell(double v) : type(CellType::Number), num_value(v)
 {
 
@@ -72,10 +71,6 @@ std::queue<std::string> Interpreter::lex(std::string_view source)
 	return tokens;
 }
 
-Cell Interpreter::read(std::string const& str)
-{
-	return read_from(lex(str));
-}
 
 Cell Interpreter::read_from(std::queue<std::string>& tokens)
 {
@@ -108,13 +103,18 @@ Cell Interpreter::read_from(std::queue<std::string>& tokens)
 	}
 }
 
-Cell Interpreter::eval(Cell const& cell)
+Cell Interpreter::eval(Cell const& cell, Environement& env)
 {
 	if (isPrimitivetype(cell.type))
 		return cell;
 
 	if (cell.type == CellType::Symbol)
-		return symbols[cell.value];
+	{
+		if (env.symbols.find(cell.value) != env.symbols.end())
+			return env.symbols[cell.value];
+		else
+			return global_env.symbols[cell.value];
+	}
 
 	if (cell.list.empty())
 		return Cell();
@@ -123,24 +123,42 @@ Cell Interpreter::eval(Cell const& cell)
 	{
 		if (cell.list[0].value == "set")
 		{
-			return symbols[cell.list[1].value] = eval(cell.list[2]);
+			return env.symbols[cell.list[1].value] = eval(cell.list[2], env);
 		}
 		else if (cell.list[0].value == "if")
 		{
-			return eval(eval(cell.list[1]).bool_value ? cell.list[2] : (cell.list.size() > 2 ? cell.list[3] : Cell()));
+			return eval(eval(cell.list[1], env).bool_value ? cell.list[2] : (cell.list.size() > 2 ? cell.list[3] : Cell()), env);
 		}
 		else if (cell.list[0].value == "while")
 		{
-			while (eval(cell.list[1]).bool_value)
+			while (eval(cell.list[1], env).bool_value)
 			{
 				if (cell.list.size() > 2)
-					eval(cell.list[2]);
+					eval(cell.list[2], env);
 			}
 			return Cell();
 		}
+		else if (cell.list[0].value == "defun")
+		{
+			std::string const func_name = cell.list[1].value;
+			Cell func_args = cell.list[2];
+			Cell body = cell.list[3];
+
+			Cell fun = [this, cell, env, func_name, func_args, body](std::vector<Cell> const& args) mutable -> Cell {
+				// add function args in local env
+				size_t i = 0;
+				Cell func_sym = env.symbols[func_name];
+				for (auto& arg : func_args.list)
+					func_sym.local_env.symbols[arg.value] = args[i++];
+
+				return eval(body, func_sym.local_env);
+			};
+
+			return env.symbols[cell.list[1].value] = fun;
+		}
 	}
 
-	Cell proc = eval(cell.list.front());
+	Cell proc = eval(cell.list.front(), env);
 	std::vector<Cell> exprs;
 	bool skipFirst = true;
 	for (auto& expr : cell.list)
@@ -150,7 +168,7 @@ Cell Interpreter::eval(Cell const& cell)
 			skipFirst = false;
 			continue;
 		}
-		exprs.push_back(eval(expr));
+		exprs.push_back(eval(expr, env));
 	}
 
 	return proc.proc(exprs);
@@ -160,7 +178,12 @@ Cell Interpreter::eval(Cell const& cell)
 
 Cell Interpreter::evalS(std::string const& str)
 {
-	return eval(read(str));
+	auto& tokens = lex(str);
+	Cell last;
+	while (!tokens.empty())
+		last = eval(read_from(tokens), global_env);
+
+	return last;
 }
 
 static void print_cell(Cell const& cell)
@@ -187,37 +210,43 @@ static void print_cell(Cell const& cell)
 	}
 }
 
+static void print_cells(std::vector<Cell> const& args)
+{
+	for (auto const& c : args)
+		print_cell(c);
+}
+
 void Interpreter::set_globals()
 {
-	symbols["+"] = Cell([](std::vector<Cell> const& args) -> Cell {
+	global_env.symbols["+"] = Cell([](std::vector<Cell> const& args) -> Cell {
 		double sum = 0.0f; 
 		for (auto const& c : args)
 			sum += c.num_value; 
 		return Cell(sum); 
 	});
 
-	symbols["-"] = Cell([](std::vector<Cell> const& args) -> Cell {
+	global_env.symbols["-"] = Cell([](std::vector<Cell> const& args) -> Cell {
 		double n = args[0].num_value;
 		for (size_t i = 1; i < args.size(); i++)
 			n -= args[i].num_value;
 		return Cell(n);
 		});
 
-	symbols["*"] = Cell([](std::vector<Cell> const& args) -> Cell {
+	global_env.symbols["*"] = Cell([](std::vector<Cell> const& args) -> Cell {
 		double sum = 1.0f;
 		for (auto const& c : args)
 			sum *= c.num_value;
 		return Cell(sum);
 		});
 
-	symbols["/"] = Cell([](std::vector<Cell> const& args) -> Cell {
+	global_env.symbols["/"] = Cell([](std::vector<Cell> const& args) -> Cell {
 		double n = args[0].num_value;
 		for (size_t i = 1; i < args.size(); i++)
 			n /= args[i].num_value;
 		return Cell(n);
 		});
 
-	symbols[">"] = Cell([](std::vector<Cell> const& args) -> Cell {
+	global_env.symbols[">"] = Cell([](std::vector<Cell> const& args) -> Cell {
 		double n = args[0].num_value;
 		for (size_t i = 1; i < args.size(); i++)
 		{
@@ -227,7 +256,7 @@ void Interpreter::set_globals()
 		return Cell(true);
 		});
 
-	symbols["<"] = Cell([](std::vector<Cell> const& args) -> Cell {
+	global_env.symbols["<"] = Cell([](std::vector<Cell> const& args) -> Cell {
 		double n = args[0].num_value;
 		for (size_t i = 1; i < args.size(); i++)
 		{
@@ -237,12 +266,18 @@ void Interpreter::set_globals()
 		return Cell(true);
 		});
 
-	symbols["true"] = Cell(true);
-	symbols["false"] = Cell(false);
+	global_env.symbols["true"] = Cell(true);
+	global_env.symbols["false"] = Cell(false);
+	global_env.symbols["null"] = Cell();
 
-	symbols["print"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		for (auto const& c : args)
-			print_cell(c);
+	global_env.symbols["print"] = Cell([](std::vector<Cell> const& args) -> Cell {
+		print_cells(args);
+		return Cell();
+		});
+
+	global_env.symbols["println"] = Cell([](std::vector<Cell> const& args) -> Cell {
+		print_cells(args);
+		puts("");
 		return Cell();
 		});
 }
