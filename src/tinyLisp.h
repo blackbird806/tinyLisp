@@ -1,66 +1,69 @@
 #pragma once
-#include <string_view>
 #include <vector>
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
 #include <string>
-#include <memory>
-#include <optional>
 
-enum class CellType
-{
-	Symbol,
-	Number,
-	Bool,
-	String,
-	List,
-	Proc,
-	Null,
-};
+namespace lsp {
 
-const char* toString(CellType);
+	enum class CellType
+	{
+		Symbol,
+		Number,
+		Bool,
+		String,
+		List,
+		Proc,
+		Null,
+	};
 
-struct Cell;
-struct Environement
-{
-	std::unordered_map<std::string, Cell> symbols;
-};
+	const char* toString(CellType);
 
-struct Cell
-{
-	Cell(CellType = CellType::Null);
-	Cell(CellType, std::string);
-	Cell(double);
-	Cell(bool);
-	Cell(std::vector<Cell> const&);
-	Cell(std::function<Cell(std::vector<Cell> const&)>);
+	struct Cell;
+	struct Environement
+	{
+		std::unordered_map<std::string, Cell> symbols;
+	};
 
-	CellType type;
-	std::string value;
-	double num_value;
-	bool bool_value;
+	struct Cell
+	{
+		Cell(CellType = CellType::Null);
+		Cell(CellType, std::string);
+		Cell(double);
+		Cell(bool);
+		Cell(std::vector<Cell> const&);
+		Cell(std::function<Cell(std::vector<Cell> const&)>);
 
-	std::function<Cell(std::vector<Cell> const&)> proc;
-	std::vector<Cell> list;
+		CellType type;
+		std::string value;
+		double num_value;
+		bool bool_value;
 
-	Environement local_env;
-};
+		std::function<Cell(std::vector<Cell> const&)> proc;
+		std::vector<Cell> list;
 
-class Interpreter
-{
+		Environement local_env;
+	};
 
-public:
-	Interpreter();
-	Cell eval(Cell const& cell, Environement& env);
-	Cell evalS(std::string const&, Environement& env);
-	Cell evalS(std::string const&);
+	class Interpreter
+	{
 
-	Environement global_env;
+	public:
+		Interpreter();
+		Cell eval(Cell const& cell, Environement& env);
+		Cell evalS(std::string const&, Environement& env);
+		Cell evalS(std::string const&);
 
-private:
-	void set_globals();
+		Environement global_env;
 
-	static std::queue<std::string> lex(std::string_view source);
-	static Cell read_from(std::queue<std::string>& tokens);
-};
+	private:
+		void set_globals();
+
+		std::unordered_set<std::string> imported_files;
+
+		static std::queue<std::string> lex(std::string_view source);
+		static Cell read_from(std::queue<std::string>& tokens);
+	};
+}

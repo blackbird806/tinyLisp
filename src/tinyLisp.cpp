@@ -4,13 +4,16 @@
 #include <cstdio>
 #include <numeric>
 #include <stdexcept>
+#include <fstream>
+
+using namespace lsp;
 
 static bool isPrimitivetype(CellType t)
 {
 	return t == CellType::Number || t == CellType::Null || t == CellType::Bool || t == CellType::String;
 }
 
-const char* toString(CellType c)
+const char* lsp::toString(CellType c)
 {
 	switch (c)
 	{
@@ -153,7 +156,18 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 
 	if (cell.list[0].type == CellType::Symbol)
 	{
-		if (cell.list[0].value == "set")
+		if (cell.list[0].value == "import")
+		{
+			std::string file_name = cell.list[1].value;
+			if (imported_files.count(file_name) == 0)
+			{
+				std::ifstream file(file_name);
+				std::string source((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+				evalS(source);
+			}
+			return Cell();
+		}
+		else if (cell.list[0].value == "set")
 		{
 			return env.symbols[cell.list[1].value] = eval(cell.list[2], env);
 		}
@@ -163,7 +177,7 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 		}
 		else if (cell.list[0].value == "if")
 		{
-			return eval(eval(cell.list[1], env).bool_value ? cell.list[2] : (cell.list.size() > 2 ? cell.list[3] : Cell()), env);
+			return eval(eval(cell.list[1], env).bool_value ? cell.list[2] : (cell.list.size() > 3 ? cell.list[3] : Cell()), env);
 		}
 		else if (cell.list[0].value == "while")
 		{
@@ -193,7 +207,7 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 					last = eval(b, func_sym.local_env);
 				return last;
 			};
-
+			fun.value = func_name;
 			return env.symbols[cell.list[1].value] = fun;
 		}
 		else if (cell.list[0].value == "typeof")
@@ -271,12 +285,18 @@ static void print_cell(Cell const& cell)
 	else if (cell.type == CellType::List)
 	{
 		printf("( ");
+		size_t i = cell.list.size();
 		for (auto const& c : cell.list)
 		{
 			print_cell(c);
-			printf(", ");
+			if (i > 1) printf(", ");
+			i--;
 		}
 		printf(" )");
+	}
+	else if (cell.type == CellType::Proc)
+	{
+		printf("%s", cell.value.c_str());
 	}
 }
 

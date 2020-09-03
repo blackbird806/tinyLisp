@@ -1,3 +1,5 @@
+(import "stdLib.lsp")
+
 ;; (defun log_list (x) 
 ;; 	(set i 0)
 ;; 	(while ( not (is_null (get x i)))
@@ -6,10 +8,6 @@
 ;; 		(println "")
 ;; 		)
 ;; 	)
-
-(defun square (x)
-	(* x x)
-	)
 
 ;; (log_list (list 0 1 2 3 4))
 ;; (println (square 5))
@@ -23,4 +21,10 @@
 		(return result)
 	)
 
-(transform (transform (list 1 2 3) square) println)
+;; (println (transform (list 1 2 3) square))
+
+(defun my_func ()
+	(return false)
+	)
+
+(std_test my_func)
