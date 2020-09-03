@@ -10,6 +10,29 @@ static bool isPrimitivetype(CellType t)
 	return t == CellType::Number || t == CellType::Null || t == CellType::Bool || t == CellType::String;
 }
 
+const char* toString(CellType c)
+{
+	switch (c)
+	{
+	case CellType::Symbol:
+		return "Number";
+	case CellType::Number:
+		return "Number";
+	case CellType::Bool:
+		return "Bool";
+	case CellType::String:
+		return "String";
+	case CellType::Null:
+		return "Null";
+	case CellType::Proc:
+		return "Proc";
+	case CellType::List:
+		return "List";
+	default:
+		return "Unknown";
+	}
+}
+
 Cell::Cell(CellType t) : type(t)
 {
 
@@ -46,12 +69,15 @@ std::queue<std::string> Interpreter::lex(std::string_view source)
 	size_t index = 0;
 	while (index < source.size())
 	{
-		while (isspace(source[index]))
+		while (index < source.size() && isspace(source[index]))
 			index++;
+
+		if (index >= source.size())
+			break;
 
 		if (source[index] == ';')
 		{
-			while (source[index++] != '\n') {}
+			while (index < source.size() && source[index++] != '\n') {}
 			continue;
 		}
 
@@ -170,26 +196,44 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 
 			return env.symbols[cell.list[1].value] = fun;
 		}
-		else if (cell.list[0].value == "eval")
+		else if (cell.list[0].value == "typeof")
 		{
+			std::vector<Cell> typeList;
+			typeList.reserve(cell.list.size() - 1);
+
+			for (auto arg = cell.list.begin() + 1; arg != cell.list.end(); ++arg)
+			{
+				std::string typeName = "Null";
+				
+				if (arg->type == CellType::Symbol)
+					typeName = toString(env.symbols[arg->value].type);
+				else
+					typeName = toString(arg->type);
+
+				typeList.emplace_back(CellType::String, typeName);
+			}
+
+			return Cell(typeList);
+		}
+
+		if (cell.list[0].value == "eval")
 			return evalS(cell.list[1].value, env);
-		}
-	}
 
-	Cell proc = eval(cell.list.front(), env);
-	std::vector<Cell> exprs;
-	bool skipFirst = true;
-	for (auto& expr : cell.list)
-	{
-		if (skipFirst)
+		Cell proc = eval(cell.list[0], env);
+		std::vector<Cell> exprs;
+		bool skipFirst = true;
+		for (auto& expr : cell.list)
 		{
-			skipFirst = false;
-			continue;
+			if (skipFirst)
+			{
+				skipFirst = false;
+				continue;
+			}
+			exprs.push_back(eval(expr, env));
 		}
-		exprs.push_back(eval(expr, env));
-	}
 
-	return proc.proc(exprs);
+		return proc.proc(exprs);
+	}
 
 	return Cell();
 }
@@ -226,10 +270,13 @@ static void print_cell(Cell const& cell)
 	}
 	else if (cell.type == CellType::List)
 	{
+		printf("( ");
 		for (auto const& c : cell.list)
 		{
 			print_cell(c);
+			printf(", ");
 		}
+		printf(" )");
 	}
 }
 
@@ -273,7 +320,7 @@ void Interpreter::set_globals()
 		double n = args[0].num_value;
 		for (size_t i = 1; i < args.size(); i++)
 		{
-			if (n < args[i].num_value)
+			if (n <= args[i].num_value)
 				return Cell(false);
 		}
 		return Cell(true);
@@ -283,7 +330,7 @@ void Interpreter::set_globals()
 		double n = args[0].num_value;
 		for (size_t i = 1; i < args.size(); i++)
 		{
-			if (n > args[i].num_value)
+			if (n >= args[i].num_value)
 				return Cell(false);
 		}
 		return Cell(true);
@@ -305,6 +352,10 @@ void Interpreter::set_globals()
 			Cell c{ CellType::List };
 			c.list = args;
 			return c;
+		});
+
+	global_env.symbols["return"] = Cell([](std::vector<Cell> const& args) -> Cell {
+		return args[0];
 		});
 
 	global_env.symbols["append"] = Cell([](std::vector<Cell> const& args) -> Cell {

@@ -19,6 +19,8 @@ enum class CellType
 	Null,
 };
 
+const char* toString(CellType);
+
 struct Cell;
 struct Environement
 {
