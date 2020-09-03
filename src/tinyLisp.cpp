@@ -18,7 +18,7 @@ const char* lsp::toString(CellType c)
 	switch (c)
 	{
 	case CellType::Symbol:
-		return "Number";
+		return "Symbol";
 	case CellType::Number:
 		return "Number";
 	case CellType::Bool:
