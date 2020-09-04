@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <cstdio>
+#include <cmath>
 #include <numeric>
 #include <stdexcept>
 #include <fstream>
@@ -218,7 +219,7 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 			for (auto arg = cell.list.begin() + 1; arg != cell.list.end(); ++arg)
 			{
 				std::string typeName = "Null";
-				
+
 				if (arg->type == CellType::Symbol)
 					typeName = toString(env.symbols[arg->value].type);
 				else
@@ -234,6 +235,12 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 			return evalS(cell.list[1].value, env);
 
 		Cell proc = eval(cell.list[0], env);
+		if (proc.type != CellType::Proc)
+		{
+			printf("error : symbol %s undefined\n", cell.list[0].value.c_str());
+			return Cell();
+		}
+
 		std::vector<Cell> exprs;
 		bool skipFirst = true;
 		for (auto& expr : cell.list)
@@ -248,8 +255,6 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 
 		return proc.proc(exprs);
 	}
-
-	return Cell();
 }
 
 Cell Interpreter::evalS(std::string const& str)
@@ -336,11 +341,25 @@ void Interpreter::set_globals()
 		return Cell(n);
 		});
 
+	global_env.symbols["%"] = Cell([](std::vector<Cell> const& args) -> Cell {
+		return Cell(fmod(args[0].num_value, args[1].num_value));
+		});
+
 	global_env.symbols[">"] = Cell([](std::vector<Cell> const& args) -> Cell {
 		double n = args[0].num_value;
 		for (size_t i = 1; i < args.size(); i++)
 		{
 			if (n <= args[i].num_value)
+				return Cell(false);
+		}
+		return Cell(true);
+		});
+
+	global_env.symbols["="] = Cell([](std::vector<Cell> const& args) -> Cell {
+		double n = args[0].num_value;
+		for (size_t i = 1; i < args.size(); i++)
+		{
+			if (n != args[i].num_value)
 				return Cell(false);
 		}
 		return Cell(true);

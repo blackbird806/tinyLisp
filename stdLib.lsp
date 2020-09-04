@@ -13,6 +13,17 @@
 		(return result)
 	)
 
+(defun std_filter (l fn)
+		(set i 0)
+		(while (< i (length l))
+			(if (fn (get l i))
+				(set result (append result (get l i)))
+			)
+			(set i (+ i 1))
+		)
+		(return result)
+	)
+
 (defun std_pow (x p)
 	(set i 0)
 	(set s x)
@@ -26,4 +37,13 @@
 
 (defun std_sqr (x)
 	(* x x)
+	)
+
+(defun std_is_even (x)
+	(= (% x 2) 0)
+	)
+
+
+(defun std_is_odd (x)
+	(= (% x 2) 1)
 	)
