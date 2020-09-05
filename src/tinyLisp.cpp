@@ -4,8 +4,28 @@
 #include <cstdio>
 #include <cmath>
 #include <numeric>
-#include <stdexcept>
 #include <fstream>
+
+#define FMT_CELL_CASES \
+case 1: printf(args[0].value.c_str()); break;\
+case 2: printf(args[0].value.c_str(), to_string(args[1]).c_str()); break;\
+case 3: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str()); break;\
+case 4: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str()); break;\
+case 5: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str()); break;\
+case 6: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str()); break;\
+case 7: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str()); break;\
+case 8: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str()); break;\
+case 9: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str()); break;\
+case 10: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str()); break;\
+case 11: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str()); break;\
+case 12: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str()); break;\
+case 13: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str()); break;\
+case 14: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str()); break;\
+case 15: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str()); break;\
+case 16: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str(), to_string(args[15]).c_str()); break;\
+case 17: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str(), to_string(args[15]).c_str(), to_string(args[16]).c_str()); break;\
+case 18: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str(), to_string(args[15]).c_str(), to_string(args[16]).c_str(), to_string(args[17]).c_str()); break;\
+case 19: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str(), to_string(args[15]).c_str(), to_string(args[16]).c_str(), to_string(args[17]).c_str(), to_string(args[18]).c_str()); break;\
 
 using namespace lsp;
 
@@ -14,7 +34,7 @@ static bool isPrimitivetype(CellType t)
 	return t == CellType::Number || t == CellType::Null || t == CellType::Bool || t == CellType::String;
 }
 
-const char* lsp::toString(CellType c)
+const char* lsp::to_string(CellType c)
 {
 	switch (c)
 	{
@@ -99,7 +119,7 @@ std::queue<std::string> Interpreter::lex(std::string_view source)
 		else
 		{
 			size_t const save = index;
-			while (!isblank(source[index]) && source[index] != '(' && source[index] != ')')
+			while (!isspace(source[index]) && source[index] != '(' && source[index] != ')')
 				index++;
 			tokens.push(std::string(source.substr(save, index - save)));
 		}
@@ -200,7 +220,7 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 				// add function args in local env
 				size_t i = 0;
 				Cell& func_sym = env.symbols[func_name];
-				for (auto& arg : func_args.list)
+				for (auto const& arg : func_args.list)
 					func_sym.local_env.symbols[arg.value] = args[i++];
 
 				Cell last;
@@ -221,9 +241,9 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 				std::string typeName = "Null";
 
 				if (arg->type == CellType::Symbol)
-					typeName = toString(env.symbols[arg->value].type);
+					typeName = to_string(env.symbols[arg->value].type);
 				else
-					typeName = toString(arg->type);
+					typeName = to_string(arg->type);
 
 				typeList.emplace_back(CellType::String, typeName);
 			}
@@ -235,25 +255,26 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 			return evalS(cell.list[1].value, env);
 
 		Cell proc = eval(cell.list[0], env);
-		if (proc.type != CellType::Proc)
+		if (proc.type == CellType::Proc)
+		{
+			std::vector<Cell> exprs;
+			bool skipFirst = true;
+			for (auto& expr : cell.list)
+			{
+				if (skipFirst)
+				{
+					skipFirst = false;
+					continue;
+				}
+				exprs.push_back(eval(expr, env));
+			}
+			return proc.proc(exprs);
+		}
+		else
 		{
 			printf("error : symbol %s undefined\n", cell.list[0].value.c_str());
 			return Cell();
 		}
-
-		std::vector<Cell> exprs;
-		bool skipFirst = true;
-		for (auto& expr : cell.list)
-		{
-			if (skipFirst)
-			{
-				skipFirst = false;
-				continue;
-			}
-			exprs.push_back(eval(expr, env));
-		}
-
-		return proc.proc(exprs);
 	}
 }
 
@@ -268,11 +289,10 @@ Cell Interpreter::evalS(std::string const& str, Environement& env)
 	Cell last;
 	while (!tokens.empty())
 		last = eval(read_from(tokens), env);
-
 	return last;
 }
 
-static void print_cell(Cell const& cell)
+void lsp::print_cell(Cell const& cell)
 {
 	if (cell.type == CellType::Number)
 		printf("%f", cell.num_value);
@@ -302,6 +322,37 @@ static void print_cell(Cell const& cell)
 	else if (cell.type == CellType::Proc)
 	{
 		printf("%s", cell.value.c_str());
+	}
+}
+
+std::string lsp::to_string(Cell const& cell)
+{
+	switch (cell.type)
+	{
+	case CellType::Number:
+		return std::to_string(cell.num_value);
+	case CellType::Bool:
+		return std::to_string(cell.bool_value);
+	case CellType::String:
+	case CellType::Proc:
+		return cell.value;
+	case CellType::List:
+	{
+		std::string str("( ");
+		size_t i = cell.list.size();
+		for (auto const& c : cell.list)
+		{
+			str += to_string(c);
+			if (i > 1) printf(", ");
+			i--;
+		}
+		str += " )";
+		return str;
+	}
+	case CellType::Null:
+		return "Null";
+	default:
+		return "Invalid";
 	}
 }
 
@@ -421,6 +472,16 @@ void Interpreter::set_globals()
 
 	global_env.symbols["print"] = Cell([](std::vector<Cell> const& args) -> Cell {
 		print_cells(args);
+		return Cell();
+		});
+
+	global_env.symbols["format"] = Cell([](std::vector<Cell> const& args) -> Cell {
+
+		switch (args.size())
+		{
+			FMT_CELL_CASES
+		}
+
 		return Cell();
 		});
 

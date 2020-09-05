@@ -19,8 +19,7 @@ namespace lsp {
 		Null,
 	};
 
-	const char* toString(CellType);
-
+	const char* to_string(CellType);
 	struct Cell;
 	struct Environement
 	{
@@ -47,6 +46,9 @@ namespace lsp {
 		Environement local_env;
 	};
 
+	void print_cell(Cell const& c);
+	std::string to_string(Cell const& c);
+
 	class Interpreter
 	{
 
@@ -60,7 +62,6 @@ namespace lsp {
 
 	private:
 		void set_globals();
-
 		std::unordered_set<std::string> imported_files;
 
 		static std::queue<std::string> lex(std::string_view source);

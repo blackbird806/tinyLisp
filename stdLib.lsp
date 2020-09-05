@@ -39,11 +39,37 @@
 	(* x x)
 	)
 
+; https://stackoverflow.com/a/39712957
+(defun std_sqrt (x)
+	(set lo 0)
+	(set hi x)
+	(set i 0)
+	(while (< i 1000)
+		(set mid (/ (+ lo hi) 2))
+		
+		(if (= (std_sqr mid) x)
+			(set i 99999) ; break
+			)
+
+		(if (> (std_sqr mid) x)
+			(set hi mid)
+			(set lo mid) ; else
+			)
+
+		(set i (+ i 1))
+		)
+	(return mid)
+	)
+
 (defun std_is_even (x)
 	(= (% x 2) 0)
 	)
 
-
 (defun std_is_odd (x)
 	(= (% x 2) 1)
 	)
+
+(defun std_random (prev)
+	(+ (* prev 1664525) 1013904223))
+	)
+
