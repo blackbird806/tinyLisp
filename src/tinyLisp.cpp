@@ -6,6 +6,7 @@
 #include <numeric>
 #include <fstream>
 
+// max 20 args with format fct
 #define FMT_CELL_CASES \
 case 1: printf(args[0].value.c_str()); break;\
 case 2: printf(args[0].value.c_str(), to_string(args[1]).c_str()); break;\
@@ -216,10 +217,11 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 			Cell func_args = cell.list[2];
 			std::vector<Cell> body = std::vector(cell.list.begin() + 3, cell.list.end());
 
-			Cell fun = [this, cell, env, func_name, func_args, body](std::vector<Cell> const& args) mutable -> Cell {
+			Cell fun = Cell([this, cell, env, func_name, func_args, body](std::vector<Cell> const& args) mutable -> Cell {
 				// add function args in local env
 				size_t i = 0;
 				Cell& func_sym = env.symbols[func_name];
+				func_sym.local_env.symbols.reserve(func_sym.local_env.symbols.size() + func_args.list.size());
 				for (auto const& arg : func_args.list)
 					func_sym.local_env.symbols[arg.value] = args[i++];
 
@@ -227,7 +229,7 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 				for (auto const& b : body)
 					last = eval(b, func_sym.local_env);
 				return last;
-			};
+				});
 			fun.value = func_name;
 			return env.symbols[cell.list[1].value] = fun;
 		}
@@ -258,6 +260,7 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 		if (proc.type == CellType::Proc)
 		{
 			std::vector<Cell> exprs;
+			exprs.reserve(cell.list.size());
 			bool skipFirst = true;
 			for (auto& expr : cell.list)
 			{
@@ -285,7 +288,7 @@ Cell Interpreter::evalS(std::string const& str)
 
 Cell Interpreter::evalS(std::string const& str, Environement& env)
 {
-	auto& tokens = lex(str);
+	auto tokens = lex(str);
 	Cell last;
 	while (!tokens.empty())
 		last = eval(read_from(tokens), env);
