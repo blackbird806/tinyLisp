@@ -440,6 +440,62 @@ Interpreter::Interpreter()
 		};
 		global_env.symbols["println"] = c;
 	}
+	{
+		Cell c = { CellType::Symbol };
+		c.value = true;
+		global_env.symbols["true"] = c;
+	}
+	{
+		Cell c = { CellType::Symbol };
+		c.value = false;
+		global_env.symbols["false"] = c;
+	}
+	{
+		global_env.symbols["null"] = Cell();
+	}
+	{
+		Cell c = { CellType::Proc };
+		c.value = [](CellList_t const& args) {
+			Cell ret = { CellType::Int };
+			ret.value = (CellIntegral_t) args.size();
+			return ret;
+		};
+		global_env.symbols["length"] = c;
+	}
+	{
+		Cell c = { CellType::Proc };
+		c.value = [](CellList_t const& args) {
+			return args[0];
+		};
+		global_env.symbols["return"] = c;
+	}
+	{
+		Cell c = { CellType::Proc };
+		c.value = [](CellList_t const& args) {
+			ENSURE(args[0].type == CellType::List, "first arg of append must be a list !");
+			Cell ret = { CellType::List };
+			ret.value = CellList_t(std::get<CellList_t>(args[0].value));
+			std::get<CellList_t>(ret.value).reserve(std::get<CellList_t>(ret.value).size() + args.size() - 1);
+			for (size_t i = 1; i < args.size(); i++)
+				std::get<CellList_t>(ret.value).push_back(args[i]);
+			return ret;
+		};
+		global_env.symbols["append"] = c;
+	}
+	{
+		Cell c = { CellType::Proc };
+		c.value = [](CellList_t const& args) {
+
+			ENSURE(args.size() == 2, "get take 2 arguments !");
+			ENSURE(args[0].type == CellType::List, "first arg of get must be a list !");
+			ENSURE(args[1].type == CellType::Int, "second arg of get must be an integral !");
+			
+			Cell ret = args[std::get<CellIntegral_t>(args[1].value)];
+			ret.value = (CellIntegral_t)args.size();
+			return ret;
+		};
+		global_env.symbols["get"] = c;
+	}
 }
 
 Cell::Cell() : type(CellType::Null)
