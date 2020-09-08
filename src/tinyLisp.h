@@ -3,15 +3,44 @@
 #include <queue>
 #include <unordered_map>
 #include <unordered_set>
-#include <functional>
 #include <string>
+#include <variant>
+#include <functional>
+#include <optional>
 
 namespace lsp {
+
+	namespace detail
+	{
+		template<typename IT>
+		struct Range
+		{
+			Range(IT&& begin, IT&& end) : b(std::forward<IT>(begin)), e(std::forward<IT>(end)) {};
+
+			auto begin() const noexcept { return b; }
+			auto end() const noexcept { return e; }
+
+		private:
+			IT b;
+			IT e;
+		};
+	}
+
+	void runtime_error(const char* fmt, ...);
+
+	struct Cell;
+
+	using CellList_t = std::vector<Cell>;
+	//using CellProc_t = Cell(*)(CellList_t const&);
+	using CellProc_t = std::function<Cell(CellList_t const&)>;
+	using CellIntegral_t = long;
+	using CellFloat_t = double;
 
 	enum class CellType
 	{
 		Symbol,
-		Number,
+		Int,
+		Float,
 		Bool,
 		String,
 		List,
@@ -20,7 +49,6 @@ namespace lsp {
 	};
 
 	const char* to_string(CellType);
-	struct Cell;
 	struct Environement
 	{
 		std::unordered_map<std::string, Cell> symbols;
@@ -28,26 +56,30 @@ namespace lsp {
 
 	struct Cell
 	{
-		Cell(CellType = CellType::Null);
-		Cell(CellType, std::string);
-		Cell(double);
-		Cell(bool);
-		Cell(std::vector<Cell> const&);
-		Cell(std::function<Cell(std::vector<Cell> const&)>);
+		Cell();
+		Cell(CellType t);
+		Cell(Cell const&) = default;
+		Cell(Cell&&) noexcept = default;
+		~Cell() = default;
+
+		Cell& operator=(Cell const&) = default;
+		Cell& operator=(Cell&&) noexcept = default;
 
 		CellType type;
-		std::string value;
-		double num_value;
-		bool bool_value;
-
-		std::function<Cell(std::vector<Cell> const&)> proc;
-		std::vector<Cell> list;
-
-		Environement local_env;
+		std::string token_str;
+		
+		std::variant<
+			CellIntegral_t,
+			CellFloat_t,
+			bool,
+			std::string,
+			CellList_t,
+			CellProc_t
+		> value;
+		std::optional<Environement> local_env;
 	};
 
-	void print_cell(Cell const& c);
-	std::string to_string(Cell const& c);
+	std::string to_string(Cell const&);
 
 	class Interpreter
 	{
@@ -61,7 +93,6 @@ namespace lsp {
 		Environement global_env;
 
 	private:
-		void set_globals();
 		std::unordered_set<std::string> imported_files;
 
 		static std::queue<std::string> lex(std::string_view source);

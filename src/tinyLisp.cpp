@@ -1,38 +1,29 @@
 #include "tinyLisp.h"
 
 #include <cctype>
+#include <cstdarg>
 #include <cstdio>
 #include <cmath>
 #include <numeric>
 #include <fstream>
 
-// max 20 args with format fct
-#define FMT_CELL_CASES \
-case 1: printf(args[0].value.c_str()); break;\
-case 2: printf(args[0].value.c_str(), to_string(args[1]).c_str()); break;\
-case 3: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str()); break;\
-case 4: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str()); break;\
-case 5: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str()); break;\
-case 6: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str()); break;\
-case 7: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str()); break;\
-case 8: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str()); break;\
-case 9: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str()); break;\
-case 10: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str()); break;\
-case 11: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str()); break;\
-case 12: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str()); break;\
-case 13: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str()); break;\
-case 14: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str()); break;\
-case 15: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str()); break;\
-case 16: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str(), to_string(args[15]).c_str()); break;\
-case 17: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str(), to_string(args[15]).c_str(), to_string(args[16]).c_str()); break;\
-case 18: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str(), to_string(args[15]).c_str(), to_string(args[16]).c_str(), to_string(args[17]).c_str()); break;\
-case 19: printf(args[0].value.c_str(), to_string(args[1]).c_str(), to_string(args[2]).c_str(), to_string(args[3]).c_str(), to_string(args[4]).c_str(), to_string(args[5]).c_str(), to_string(args[6]).c_str(), to_string(args[7]).c_str(), to_string(args[8]).c_str(), to_string(args[9]).c_str(), to_string(args[10]).c_str(), to_string(args[11]).c_str(), to_string(args[12]).c_str(), to_string(args[13]).c_str(), to_string(args[14]).c_str(), to_string(args[15]).c_str(), to_string(args[16]).c_str(), to_string(args[17]).c_str(), to_string(args[18]).c_str()); break;\
+#define ENSURE(cond, fmt, ...) if (!(cond)) runtime_error(fmt, __VA_ARGS__);
 
 using namespace lsp;
 
 static bool isPrimitivetype(CellType t)
 {
-	return t == CellType::Number || t == CellType::Null || t == CellType::Bool || t == CellType::String;
+	return t == CellType::Int || t == CellType::Float || t == CellType::Null || t == CellType::Bool || t == CellType::String;
+}
+
+void lsp::runtime_error(const char* fmt, ...)
+{
+	printf("[lisp error] : ");
+	va_list args;
+	va_start(args, fmt);
+	vprintf(fmt, args);
+	va_end(args);
+	printf("\n");
 }
 
 const char* lsp::to_string(CellType c)
@@ -41,8 +32,10 @@ const char* lsp::to_string(CellType c)
 	{
 	case CellType::Symbol:
 		return "Symbol";
-	case CellType::Number:
-		return "Number";
+	case CellType::Float:
+		return "Float";
+	case CellType::Int:
+		return "Int";
 	case CellType::Bool:
 		return "Bool";
 	case CellType::String:
@@ -56,36 +49,6 @@ const char* lsp::to_string(CellType c)
 	default:
 		return "Unknown";
 	}
-}
-
-Cell::Cell(CellType t) : type(t)
-{
-
-}
-
-Cell::Cell(CellType t, std::string str) : type(t), value(str)
-{
-
-}
-
-Cell::Cell(double v) : type(CellType::Number), num_value(v)
-{
-
-}
-
-Cell::Cell(bool v) : type(CellType::Bool), bool_value(v)
-{
-
-}
-
-Cell::Cell(std::vector<Cell> const& l) : type(CellType::List), list(l)
-{
-
-}
-
-Cell::Cell(std::function<Cell(std::vector<Cell> const&)> p) : type(CellType::Proc), proc(p)
-{
-
 }
 
 std::queue<std::string> Interpreter::lex(std::string_view source)
@@ -136,26 +99,36 @@ Cell Interpreter::read_from(std::queue<std::string>& tokens)
 	if (tk == "(")
 	{
 		Cell c{ CellType::List };
+		c.value = CellList_t();
 		while (tokens.front() != ")")
-			c.list.push_back(read_from(tokens));
+			std::get<CellList_t>(c.value).push_back(read_from(tokens));
 
 		tokens.pop();
 		return c;
 	}
 	else if (isdigit(tk.front()) || (tk.front() == '-' && isdigit(tk[1])))
 	{
-		Cell c{ std::stod(tk) };
+		if (tk.find('.') != std::string::npos) // is float
+		{
+			Cell c{ CellType::Float };
+			c.value = std::stod(tk);
+			return c;
+		}
+
+		Cell c{ CellType::Int };
+		c.value = std::stol(tk);
 		return c;
 	}
 	else if (tk.front() == '"')
 	{
-		Cell c{ CellType::String, tk.substr(1, tk.size() - 2)};
+		Cell c{ CellType::String };
+		c.value = tk.substr(1, tk.size() - 2);
 		return c;
 	}
 	else
 	{
 		Cell c{ CellType::Symbol };
-		c.value = tk;
+		c.token_str = tk;
 		return c;
 	}
 }
@@ -167,20 +140,23 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 
 	if (cell.type == CellType::Symbol)
 	{
-		if (env.symbols.find(cell.value) != env.symbols.end())
-			return env.symbols[cell.value];
+		if (env.symbols.find(cell.token_str) != env.symbols.end())
+			return env.symbols[cell.token_str];
 		else
-			return global_env.symbols[cell.value];
+			return global_env.symbols[cell.token_str];
 	}
 
-	if (cell.list.empty())
+	auto& list_value = std::get<CellList_t>(cell.value);
+
+	if (list_value.empty())
 		return Cell();
 
-	if (cell.list[0].type == CellType::Symbol)
+	if (list_value[0].type == CellType::Symbol)
 	{
-		if (cell.list[0].value == "import")
+		if (list_value[0].token_str == "import")
 		{
-			std::string file_name = cell.list[1].value;
+			ENSURE(list_value[1].type == CellType::String, "a string literal must follow an import !");
+			std::string file_name = std::get<std::string>(list_value[1].value);
 			if (imported_files.count(file_name) == 0)
 			{
 				std::ifstream file(file_name);
@@ -189,80 +165,64 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 			}
 			return Cell();
 		}
-		else if (cell.list[0].value == "set")
+		else if (list_value[0].token_str == "set")
 		{
-			return env.symbols[cell.list[1].value] = eval(cell.list[2], env);
+			return env.symbols[list_value[1].token_str] = eval(list_value[2], env);
 		}
-		else if (cell.list[0].value == "setg")
+		else if (list_value[0].token_str == "setg")
 		{
-			return global_env.symbols[cell.list[1].value] = eval(cell.list[2], env);
+			return global_env.symbols[list_value[1].token_str] = eval(list_value[2], env);
 		}
-		else if (cell.list[0].value == "if")
+		else if (list_value[0].token_str == "if")
 		{
-			return eval(eval(cell.list[1], env).bool_value ? cell.list[2] : (cell.list.size() > 3 ? cell.list[3] : Cell()), env);
+			return eval(std::get<bool>(eval(list_value[1], env).value) ? list_value[2] : (list_value.size() > 3 ? list_value[3] : Cell()), env);
 		}
-		else if (cell.list[0].value == "while")
+		else if (list_value[0].token_str == "while")
 		{
-			std::vector<Cell> body = std::vector(cell.list.begin() + 2, cell.list.end());
-			while (eval(cell.list[1], env).bool_value)
+			std::vector<Cell> body = std::vector(list_value.begin() + 2, list_value.end());
+			while (std::get<bool>(eval(list_value[1], env).value))
 			{
 				for (auto const& b : body)
 					eval(b, env);
 			}
 			return Cell();
 		}
-		else if (cell.list[0].value == "defun")
+		else if (list_value[0].token_str == "defun")
 		{
-			std::string const func_name = cell.list[1].value;
-			Cell func_args = cell.list[2];
-			std::vector<Cell> body = std::vector(cell.list.begin() + 3, cell.list.end());
-
-			Cell fun = Cell([this, cell, env, func_name, func_args, body](std::vector<Cell> const& args) mutable -> Cell {
+			auto& cellList = std::get<CellList_t>(cell.value);
+			std::string const func_name = cellList[1].token_str;
+			Cell func_args = cellList[2];
+			std::vector<Cell> body = std::vector(cellList.begin() + 3, cellList.end());
+			Cell fun = { CellType::Proc };
+			fun.local_env = Environement();
+			fun.value = [this, cell, env, func_name, func_args, body](std::vector<Cell> const& args) mutable -> Cell {
 				// add function args in local env
 				size_t i = 0;
 				Cell& func_sym = env.symbols[func_name];
-				func_sym.local_env.symbols.reserve(func_sym.local_env.symbols.size() + func_args.list.size());
-				for (auto const& arg : func_args.list)
-					func_sym.local_env.symbols[arg.value] = args[i++];
+				func_sym.local_env->symbols.reserve(func_sym.local_env->symbols.size() + std::get<CellList_t>(func_args.value).size());
+				for (auto const& arg : std::get<CellList_t>(func_args.value))
+					func_sym.local_env->symbols[std::get<std::string>(arg.value)] = args[i++];
 
 				Cell last;
 				for (auto const& b : body)
-					last = eval(b, func_sym.local_env);
+					last = eval(b, *func_sym.local_env);
 				return last;
-				});
+				};
+
 			fun.value = func_name;
-			return env.symbols[cell.list[1].value] = fun;
-		}
-		else if (cell.list[0].value == "typeof")
-		{
-			std::vector<Cell> typeList;
-			typeList.reserve(cell.list.size() - 1);
-
-			for (auto arg = cell.list.begin() + 1; arg != cell.list.end(); ++arg)
-			{
-				std::string typeName = "Null";
-
-				if (arg->type == CellType::Symbol)
-					typeName = to_string(env.symbols[arg->value].type);
-				else
-					typeName = to_string(arg->type);
-
-				typeList.emplace_back(CellType::String, typeName);
-			}
-
-			return Cell(typeList);
+			return env.symbols[cellList[1].token_str] = fun;
 		}
 
-		if (cell.list[0].value == "eval")
-			return evalS(cell.list[1].value, env);
+		if (list_value[0].token_str == "eval")
+			return evalS(std::get<std::string>(list_value[1].value), env);
 
-		Cell proc = eval(cell.list[0], env);
+		Cell proc = eval(list_value[0], env);
 		if (proc.type == CellType::Proc)
 		{
 			std::vector<Cell> exprs;
-			exprs.reserve(cell.list.size());
+			exprs.reserve(list_value.size());
 			bool skipFirst = true;
-			for (auto& expr : cell.list)
+			for (auto& expr : list_value)
 			{
 				if (skipFirst)
 				{
@@ -271,11 +231,11 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 				}
 				exprs.push_back(eval(expr, env));
 			}
-			return proc.proc(exprs);
+			return std::get<CellProc_t>(proc.value)(exprs);
 		}
 		else
 		{
-			printf("error : symbol %s undefined\n", cell.list[0].value.c_str());
+			printf("error : symbol %s undefined\n", list_value[0].token_str.c_str());
 			return Cell();
 		}
 	}
@@ -295,207 +255,231 @@ Cell Interpreter::evalS(std::string const& str, Environement& env)
 	return last;
 }
 
-void lsp::print_cell(Cell const& cell)
+Interpreter::Interpreter()
 {
-	if (cell.type == CellType::Number)
-		printf("%f", cell.num_value);
-	else if (cell.type == CellType::Null)
-		printf("null");
-	else if (cell.type == CellType::String)
-		printf("%s", cell.value.c_str());
-	else if (cell.type == CellType::Bool)
 	{
-		if (cell.bool_value)
-			printf("true");
-		else
-			printf("false");
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			Cell c{ CellType::List };
+			c.value = args;
+			return c;
+		};
+		global_env.symbols["list"] = retCell;
 	}
-	else if (cell.type == CellType::List)
 	{
-		printf("( ");
-		size_t i = cell.list.size();
-		for (auto const& c : cell.list)
-		{
-			print_cell(c);
-			if (i > 1) printf(", ");
-			i--;
-		}
-		printf(" )");
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			CellType sumType = CellType::Int; // int is the weaker type
+			for (auto const& c : args) 
+			{ 
+				if (c.type == CellType::Float) 
+				{ 
+					sumType = CellType::Float; 
+					break; 
+				} 
+			} 
+			if (sumType == CellType::Float) 
+			{ 
+				CellFloat_t sum = 0.0; 
+				for (auto const& c : args) 
+				{ 
+					ENSURE(c.type == CellType::Float || c.type == CellType::Int, "only numerical value can be sumed !"); 
+					if (c.type == CellType::Float) 
+						sum += std::get<CellFloat_t>(c.value); 
+					else 
+						sum += std::get<CellIntegral_t>(c.value); 
+				} 
+				Cell ret = { CellType::Float }; 
+				ret.value = sum; 
+				return ret; 
+			} 
+			{ // SumType == In
+				CellIntegral_t sum = 0; 
+				for (auto const& c : args) 
+				{ 
+					ENSURE(c.type == CellType::Float || c.type == CellType::Int, "only numerical value can be sumed !"); 
+					if (c.type == CellType::Float) 
+						sum += std::get<CellFloat_t>(c.value); 
+					else 
+						sum += std::get<CellIntegral_t>(c.value); 
+				} 
+				Cell ret = { CellType::Int }; 
+				ret.value = sum; 
+				return ret; 
+			} 
+		}; 
+		global_env.symbols["+"] = retCell;
 	}
-	else if (cell.type == CellType::Proc)
 	{
-		printf("%s", cell.value.c_str());
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			CellType sumType = CellType::Int; // int is the weaker type
+			for (auto const& c : args)
+			{
+				if (c.type == CellType::Float)
+				{
+					sumType = CellType::Float;
+					break;
+				}
+			}
+			if (sumType == CellType::Float)
+			{
+				CellFloat_t sum = 0.0;
+				if (args[0].type == CellType::Float)
+					sum = std::get<CellFloat_t>(args[0].value);
+				else // int type
+					sum = std::get<CellIntegral_t>(args[0].value);
+				for (auto const& c : detail::Range(args.begin() + 1, args.end()))
+				{
+					ENSURE(c.type == CellType::Float || c.type == CellType::Int, "only numerical value can be sumed !");
+					if (c.type == CellType::Float)
+						sum -= std::get<CellFloat_t>(c.value);
+					else
+						sum -= std::get<CellIntegral_t>(c.value);
+				}
+				Cell ret = { CellType::Float };
+				ret.value = sum;
+				return ret;
+			}
+			{ // SumType == In
+				CellIntegral_t sum = 0;
+				if (args[0].type == CellType::Float)
+					sum = std::get<CellFloat_t>(args[0].value);
+				else // int type
+					sum = std::get<CellIntegral_t>(args[0].value);
+				for (auto const& c : detail::Range(args.begin() + 1, args.end()))
+				{
+					ENSURE(c.type == CellType::Float || c.type == CellType::Int, "only numerical value can be sumed !");
+					if (c.type == CellType::Float)
+						sum -= std::get<CellFloat_t>(c.value);
+					else
+						sum -= std::get<CellIntegral_t>(c.value);
+				}
+				Cell ret = { CellType::Int };
+				ret.value = sum;
+				return ret;
+			}
+		};
+		global_env.symbols["-"] = retCell;
 	}
+	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			CellType sumType = CellType::Int; // int is the weaker type
+			for (auto const& c : args)
+			{
+				if (c.type == CellType::Float)
+				{
+					sumType = CellType::Float;
+					break;
+				}
+			}
+			if (sumType == CellType::Float)
+			{
+				CellFloat_t sum = 1.0;
+				for (auto const& c : args)
+				{
+					ENSURE(c.type == CellType::Float || c.type == CellType::Int, "only numerical value can be multiplied !");
+					if (c.type == CellType::Float)
+						sum *= std::get<CellFloat_t>(c.value);
+					else
+						sum *= std::get<CellIntegral_t>(c.value);
+				}
+				Cell ret = { CellType::Float };
+				ret.value = sum;
+				return ret;
+			}
+			{ // SumType == In
+				CellIntegral_t sum = 1;
+				for (auto const& c : args)
+				{
+					ENSURE(c.type == CellType::Float || c.type == CellType::Int, "only numerical value can be multiplied !");
+					if (c.type == CellType::Float)
+						sum *= std::get<CellFloat_t>(c.value);
+					else
+						sum *= std::get<CellIntegral_t>(c.value);
+				}
+				Cell ret = { CellType::Int };
+				ret.value = sum;
+				return ret;
+			}
+		};
+		global_env.symbols["*"] = retCell;
+	}
+	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			ENSURE(args[0].type == CellType::Float || args[0].type == CellType::Int, "only numerical value can be divided !");
+			
+			CellFloat_t sum;
+			if (args[0].type == CellType::Float)
+				sum = std::get<CellFloat_t>(args[0].value);
+			else // int type
+				sum = std::get<CellIntegral_t>(args[0].value);
+
+			for (auto const& c : detail::Range(args.begin() + 1, args.end()))
+			{
+				ENSURE(c.type == CellType::Float || c.type == CellType::Int, "only numerical value can be divided !");
+				if (c.type == CellType::Float)
+					sum /= std::get<CellFloat_t>(c.value);
+				else
+					sum /= std::get<CellIntegral_t>(c.value);
+			}
+			Cell ret = { CellType::Float };
+			ret.value = sum;
+			return ret;
+		};
+		global_env.symbols["/"] = retCell;
+	}
+	{
+		Cell c = { CellType::Proc };
+		c.value = [](CellList_t const& args) {
+			for (auto const& a : args)
+				printf("%s\n", to_string(a).c_str());
+			return Cell();
+		};
+		global_env.symbols["println"] = c;
+	}
+}
+
+Cell::Cell() : type(CellType::Null)
+{
+}
+
+Cell::Cell(CellType t) : type(t)
+{
 }
 
 std::string lsp::to_string(Cell const& cell)
 {
 	switch (cell.type)
 	{
-	case CellType::Number:
-		return std::to_string(cell.num_value);
+	case CellType::Float:
+		return std::to_string(std::get<CellFloat_t>(cell.value));
+	case CellType::Int:
+		return std::to_string(std::get<CellIntegral_t>(cell.value));
 	case CellType::Bool:
-		return std::to_string(cell.bool_value);
+		return std::to_string(std::get<bool>(cell.value));
 	case CellType::String:
+		return std::get<std::string>(cell.value);
+	case CellType::Null:
+		return "Null";
 	case CellType::Proc:
-		return cell.value;
+		return cell.token_str;
 	case CellType::List:
 	{
 		std::string str("( ");
-		size_t i = cell.list.size();
-		for (auto const& c : cell.list)
+		size_t i = std::get<CellList_t>(cell.value).size();
+		for (auto const& c : std::get<CellList_t>(cell.value))
 		{
 			str += to_string(c);
-			if (i > 1) printf(", ");
+			if (i > 1) str += ", ";
 			i--;
 		}
 		str += " )";
 		return str;
 	}
-	case CellType::Null:
-		return "Null";
 	default:
-		return "Invalid";
+		return "Unknown";
 	}
-}
-
-static void print_cells(std::vector<Cell> const& args)
-{
-	for (auto const& c : args)
-		print_cell(c);
-}
-
-void Interpreter::set_globals()
-{
-	global_env.symbols["+"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		double sum = 0.0f; 
-		for (auto const& c : args)
-			sum += c.num_value; 
-		return Cell(sum); 
-	});
-
-	global_env.symbols["-"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		double n = args[0].num_value;
-		for (size_t i = 1; i < args.size(); i++)
-			n -= args[i].num_value;
-		return Cell(n);
-		});
-
-	global_env.symbols["*"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		double sum = 1.0f;
-		for (auto const& c : args)
-			sum *= c.num_value;
-		return Cell(sum);
-		});
-
-	global_env.symbols["/"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		double n = args[0].num_value;
-		for (size_t i = 1; i < args.size(); i++)
-			n /= args[i].num_value;
-		return Cell(n);
-		});
-
-	global_env.symbols["%"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		return Cell(fmod(args[0].num_value, args[1].num_value));
-		});
-
-	global_env.symbols[">"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		double n = args[0].num_value;
-		for (size_t i = 1; i < args.size(); i++)
-		{
-			if (n <= args[i].num_value)
-				return Cell(false);
-		}
-		return Cell(true);
-		});
-
-	global_env.symbols["="] = Cell([](std::vector<Cell> const& args) -> Cell {
-		double n = args[0].num_value;
-		for (size_t i = 1; i < args.size(); i++)
-		{
-			if (n != args[i].num_value)
-				return Cell(false);
-		}
-		return Cell(true);
-		});
-
-	global_env.symbols["<"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		double n = args[0].num_value;
-		for (size_t i = 1; i < args.size(); i++)
-		{
-			if (n >= args[i].num_value)
-				return Cell(false);
-		}
-		return Cell(true);
-		});
-
-	global_env.symbols["is_null"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		return args[0].type == CellType::Null;
-		});
-
-	global_env.symbols["not"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		return !args[0].bool_value;
-		});
-
-	global_env.symbols["true"] = Cell(true);
-	global_env.symbols["false"] = Cell(false);
-	global_env.symbols["null"] = Cell();
-
-	global_env.symbols["list"] = Cell([](std::vector<Cell> const& args) -> Cell {
-			Cell c{ CellType::List };
-			c.list = args;
-			return c;
-		});
-
-	global_env.symbols["return"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		return args[0];
-		});
-
-	global_env.symbols["append"] = Cell([](std::vector<Cell> const& args) -> Cell {
-			Cell c{ CellType::List };
-			c.list = args[0].list;
-			for (size_t i = 1; i < args.size(); i++)
-				c.list.push_back(args[i]);
-			return c;
-		});
-
-	global_env.symbols["get"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		try {
-			return Cell(args[0].list.at(round(args[1].num_value)));
-		}
-		catch (std::out_of_range&)
-		{
-			return Cell();
-		}
-		});
-
-	global_env.symbols["length"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		return Cell((double)args[0].list.size());
-		});
-
-	global_env.symbols["print"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		print_cells(args);
-		return Cell();
-		});
-
-	global_env.symbols["format"] = Cell([](std::vector<Cell> const& args) -> Cell {
-
-		switch (args.size())
-		{
-			FMT_CELL_CASES
-		}
-
-		return Cell();
-		});
-
-	global_env.symbols["println"] = Cell([](std::vector<Cell> const& args) -> Cell {
-		print_cells(args);
-		puts("");
-		return Cell();
-		});
-}
-
-Interpreter::Interpreter()
-{
-	set_globals();
 }
