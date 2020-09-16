@@ -199,9 +199,10 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 				// add function args in local env
 				size_t i = 0;
 				Cell& func_sym = env.symbols[func_name];
-				func_sym.local_env->symbols.reserve(func_sym.local_env->symbols.size() + std::get<CellList_t>(func_args.value).size());
+				func_sym.local_env = Environement{};
+
 				for (auto const& arg : std::get<CellList_t>(func_args.value))
-					func_sym.local_env->symbols[std::get<std::string>(arg.value)] = args[i++];
+					func_sym.local_env->symbols[arg.token_str] = args[i++];
 
 				Cell last;
 				for (auto const& b : body)
@@ -209,7 +210,7 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 				return last;
 				};
 
-			fun.value = func_name;
+			fun.token_str = func_name;
 			return env.symbols[cellList[1].token_str] = fun;
 		}
 
@@ -221,16 +222,10 @@ Cell Interpreter::eval(Cell const& cell, Environement& env)
 		{
 			std::vector<Cell> exprs;
 			exprs.reserve(list_value.size());
-			bool skipFirst = true;
-			for (auto& expr : list_value)
-			{
-				if (skipFirst)
-				{
-					skipFirst = false;
-					continue;
-				}
+			
+			for (auto& expr : detail::Range(list_value.begin() + 1, list_value.end()))
 				exprs.push_back(eval(expr, env));
-			}
+
 			return std::get<CellProc_t>(proc.value)(exprs);
 		}
 		else
@@ -255,6 +250,86 @@ Cell Interpreter::evalS(std::string const& str, Environement& env)
 	return last;
 }
 
+static CellType get_cellList_arithmetic_type(CellList_t const& list)
+{
+	for (auto const& c : list)
+	{
+		if (c.type == CellType::Float)
+		{
+			return CellType::Float;
+		}
+	}
+	return CellType::Int;
+}
+
+static auto lessOp(CellList_t const& args) 
+{
+	ENSURE(args[0].type == CellType::Float || args[0].type == CellType::Int, "only numerical value can be compared !");
+	Cell ret = { CellType::Bool };
+	if (args[0].type == CellType::Float)
+	{
+		CellFloat_t n = std::get<CellFloat_t>(args[0].value);
+		for (auto const& e : detail::Range(args.begin() + 1, args.end()))
+		{
+			if (n >= e.get_as_double())
+			{
+				ret.value = false;
+				return ret;
+			}
+		}
+		ret.value = true;
+		return ret;
+	}
+	else // Int
+	{
+		CellFloat_t n = std::get<CellIntegral_t>(args[0].value);
+		for (auto const& e : detail::Range(args.begin() + 1, args.end()))
+		{
+			if (n >= e.get_as_int())
+			{
+				ret.value = false;
+				return ret;
+			}
+		}
+		ret.value = true;
+		return ret;
+	}
+}
+
+static auto moreOp(CellList_t const& args)
+{
+	ENSURE(args[0].type == CellType::Float || args[0].type == CellType::Int, "only numerical value can be compared !");
+	Cell ret = { CellType::Bool };
+	if (args[0].type == CellType::Float)
+	{
+		CellFloat_t n = std::get<CellFloat_t>(args[0].value);
+		for (auto const& e : detail::Range(args.begin() + 1, args.end()))
+		{
+			if (n <= e.get_as_double())
+			{
+				ret.value = false;
+				return ret;
+			}
+		}
+		ret.value = true;
+		return ret;
+	}
+	else // Int
+	{
+		CellFloat_t n = std::get<CellIntegral_t>(args[0].value);
+		for (auto const& e : detail::Range(args.begin() + 1, args.end()))
+		{
+			if (n <= e.get_as_int())
+			{
+				ret.value = false;
+				return ret;
+			}
+		}
+		ret.value = true;
+		return ret;
+	}
+}
+
 Interpreter::Interpreter()
 {
 	{
@@ -269,15 +344,7 @@ Interpreter::Interpreter()
 	{
 		Cell retCell = { CellType::Proc };
 		retCell.value = [](CellList_t const& args) {
-			CellType sumType = CellType::Int; // int is the weaker type
-			for (auto const& c : args) 
-			{ 
-				if (c.type == CellType::Float) 
-				{ 
-					sumType = CellType::Float; 
-					break; 
-				} 
-			} 
+			CellType sumType = get_cellList_arithmetic_type(args);
 			if (sumType == CellType::Float) 
 			{ 
 				CellFloat_t sum = 0.0; 
@@ -313,15 +380,7 @@ Interpreter::Interpreter()
 	{
 		Cell retCell = { CellType::Proc };
 		retCell.value = [](CellList_t const& args) {
-			CellType sumType = CellType::Int; // int is the weaker type
-			for (auto const& c : args)
-			{
-				if (c.type == CellType::Float)
-				{
-					sumType = CellType::Float;
-					break;
-				}
-			}
+			CellType sumType = get_cellList_arithmetic_type(args);
 			if (sumType == CellType::Float)
 			{
 				CellFloat_t sum = 0.0;
@@ -365,15 +424,7 @@ Interpreter::Interpreter()
 	{
 		Cell retCell = { CellType::Proc };
 		retCell.value = [](CellList_t const& args) {
-			CellType sumType = CellType::Int; // int is the weaker type
-			for (auto const& c : args)
-			{
-				if (c.type == CellType::Float)
-				{
-					sumType = CellType::Float;
-					break;
-				}
-			}
+			CellType sumType = get_cellList_arithmetic_type(args);
 			if (sumType == CellType::Float)
 			{
 				CellFloat_t sum = 1.0;
@@ -432,6 +483,61 @@ Interpreter::Interpreter()
 		global_env.symbols["/"] = retCell;
 	}
 	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = CellProc_t(lessOp);
+		global_env.symbols["<"] = retCell;
+	}
+	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = CellProc_t(moreOp);
+		global_env.symbols[">"] = retCell;
+	}
+	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			Cell r = lessOp(args);
+			std::get<bool>(r.value) = !std::get<bool>(r.value);
+			return r;
+		};
+		global_env.symbols[">="] = retCell;
+	}
+	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			Cell r = moreOp(args);
+			std::get<bool>(r.value) = !std::get<bool>(r.value);
+			return r;
+		};
+		global_env.symbols["<="] = retCell;
+	}
+	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			ENSURE(args.size() > 0, "");
+			Cell r = { CellType::Bool };
+			r.value = true;
+			for (auto const& arg : detail::Range(args.begin() + 1, args.end()))
+				std::get<bool>(r.value) |= cell_value_equal(args[0], arg);
+
+			return r;
+		};
+		global_env.symbols["="] = retCell;
+	}
+	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
+			ENSURE(args.size() == 2, "");
+
+			Cell ret = { get_cellList_arithmetic_type(args) };
+			if (ret.type == CellType::Int)
+				ret.value = (CellIntegral_t)args[0].get_as_int() % args[1].get_as_int();
+			else
+				ret.value = (CellFloat_t)fmod(args[0].get_as_double(), args[1].get_as_double());
+			return ret;
+		};
+		global_env.symbols["%"] = retCell;
+	}
+	{
 		Cell c = { CellType::Proc };
 		c.value = [](CellList_t const& args) {
 			for (auto const& a : args)
@@ -456,8 +562,10 @@ Interpreter::Interpreter()
 	{
 		Cell c = { CellType::Proc };
 		c.value = [](CellList_t const& args) {
+			ENSURE(args.size() == 1, "lenth only takes one argument !");
+			ENSURE(args[0].type == CellType::List, "length takes a list as argument !");
 			Cell ret = { CellType::Int };
-			ret.value = (CellIntegral_t) args.size();
+			ret.value = (CellIntegral_t) std::get<CellList_t>(args[0].value).size();
 			return ret;
 		};
 		global_env.symbols["length"] = c;
@@ -472,9 +580,14 @@ Interpreter::Interpreter()
 	{
 		Cell c = { CellType::Proc };
 		c.value = [](CellList_t const& args) {
-			ENSURE(args[0].type == CellType::List, "first arg of append must be a list !");
+			ENSURE(args[0].type == CellType::List || args[0].type == CellType::Null, "first arg of append must be a list or Null!");
 			Cell ret = { CellType::List };
-			ret.value = CellList_t(std::get<CellList_t>(args[0].value));
+
+			if (args[0].type == CellType::List)
+				ret.value = CellList_t(std::get<CellList_t>(args[0].value));
+			else
+				ret.value = CellList_t();
+
 			std::get<CellList_t>(ret.value).reserve(std::get<CellList_t>(ret.value).size() + args.size() - 1);
 			for (size_t i = 1; i < args.size(); i++)
 				std::get<CellList_t>(ret.value).push_back(args[i]);
@@ -490,8 +603,7 @@ Interpreter::Interpreter()
 			ENSURE(args[0].type == CellType::List, "first arg of get must be a list !");
 			ENSURE(args[1].type == CellType::Int, "second arg of get must be an integral !");
 			
-			Cell ret = args[std::get<CellIntegral_t>(args[1].value)];
-			ret.value = (CellIntegral_t)args.size();
+			Cell ret = std::get<CellList_t>(args[0].value)[std::get<CellIntegral_t>(args[1].value)];
 			return ret;
 		};
 		global_env.symbols["get"] = c;
@@ -504,6 +616,56 @@ Cell::Cell() : type(CellType::Null)
 
 Cell::Cell(CellType t) : type(t)
 {
+}
+
+CellFloat_t lsp::Cell::get_as_double() const
+{
+	if (type == CellType::Float)
+		return std::get<CellFloat_t>(value);
+	return (CellFloat_t) std::get<CellIntegral_t>(value);
+}
+
+CellIntegral_t lsp::Cell::get_as_int() const
+{
+	if (type == CellType::Int)
+		return std::get<CellIntegral_t>(value);
+	return (CellIntegral_t)std::get<CellFloat_t>(value);
+}
+
+bool lsp::cell_value_equal(Cell const& rhs, Cell const& lhs)
+{
+	if (rhs.type != lhs.type)
+		return false;
+
+	switch (rhs.type)
+	{
+	case CellType::Symbol:
+		return rhs.token_str == lhs.token_str;
+	case CellType::Float:
+		return std::get<CellFloat_t>(rhs.value) == std::get<CellFloat_t>(lhs.value);
+	case CellType::Int:
+		return std::get<CellIntegral_t>(rhs.value) == std::get<CellIntegral_t>(lhs.value);
+	case CellType::Bool:
+		return std::get<bool>(rhs.value) == std::get<bool>(lhs.value);
+	case CellType::String:
+		return std::get<std::string>(rhs.value) == std::get<std::string>(lhs.value);
+	case CellType::Null:
+		return true;
+	case CellType::List:
+	{
+		bool r = true;
+		auto& rlist = std::get<CellList_t>(rhs.value);
+		auto& llist = std::get<CellList_t>(lhs.value);
+		if (rlist.size() != llist.size())
+			return false;
+		for (int i = 0; i < rlist.size(); i++)
+			r |= cell_value_equal(rlist[i], llist[i]);
+		return r;
+	}
+	case CellType::Proc:
+	default:
+		return false;
+	}
 }
 
 std::string lsp::to_string(Cell const& cell)

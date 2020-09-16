@@ -21,8 +21,7 @@ namespace lsp {
 			auto end() const noexcept { return e; }
 
 		private:
-			IT b;
-			IT e;
+			IT b, e;
 		};
 	}
 
@@ -65,6 +64,9 @@ namespace lsp {
 		Cell& operator=(Cell const&) = default;
 		Cell& operator=(Cell&&) noexcept = default;
 
+		CellFloat_t get_as_double() const;
+		CellIntegral_t get_as_int() const;
+
 		CellType type;
 		std::string token_str;
 		
@@ -76,8 +78,11 @@ namespace lsp {
 			CellList_t,
 			CellProc_t
 		> value;
+
 		std::optional<Environement> local_env;
 	};
+
+	bool cell_value_equal(Cell const& rhs, Cell const& lhs);
 
 	std::string to_string(Cell const&);
 
