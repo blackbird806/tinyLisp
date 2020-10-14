@@ -344,6 +344,17 @@ Interpreter::Interpreter()
 	{
 		Cell retCell = { CellType::Proc };
 		retCell.value = [](CellList_t const& args) {
+			Cell c{ CellType::String };
+			c.value = std::string();
+			for (auto const& arg : args)
+				std::get<std::string>(c.value) += to_string(arg);
+			return c;
+		};
+		global_env.symbols["strcat"] = retCell;
+	}
+	{
+		Cell retCell = { CellType::Proc };
+		retCell.value = [](CellList_t const& args) {
 			CellType sumType = get_cellList_arithmetic_type(args);
 			if (sumType == CellType::Float) 
 			{ 
@@ -359,8 +370,8 @@ Interpreter::Interpreter()
 				Cell ret = { CellType::Float }; 
 				ret.value = sum; 
 				return ret; 
-			} 
-			{ // SumType == In
+			}
+			{ // SumType == Int
 				CellIntegral_t sum = 0; 
 				for (auto const& c : args) 
 				{ 
