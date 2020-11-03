@@ -528,7 +528,7 @@ Interpreter::Interpreter()
 			Cell r = { CellType::Bool };
 			r.value = true;
 			for (auto const& arg : detail::Range(args.begin() + 1, args.end()))
-				std::get<bool>(r.value) |= cell_value_equal(args[0], arg);
+				std::get<bool>(r.value) &= cell_value_equal(args[0], arg);
 
 			return r;
 		};
@@ -556,6 +556,15 @@ Interpreter::Interpreter()
 			return Cell();
 		};
 		global_env.symbols["println"] = c;
+	}
+	{
+		Cell c = { CellType::Proc };
+		c.value = [](CellList_t const& args) {
+			for (auto const& a : args)
+				printf("%s", to_string(a).c_str());
+			return Cell();
+		};
+		global_env.symbols["print"] = c;
 	}
 	{
 		Cell c = { CellType::Symbol };
